@@ -4,26 +4,16 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.ejqe.imagesorter.data.MasterList
 import com.ejqe.imagesorter.data.Player
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.security.cert.PKIXParameters
 import kotlin.math.ln
 import kotlin.math.pow
 
 class SorterViewModel : ViewModel() {
 
-//    private val _state = MutableStateFlow(SorterScreenState(
-//        currentPair = "" to "",
-//        allMatches = listOf("" to ""),
-//        isLoading = true
-//    ))
+//    private val _state = MutableStateFlow(SorterScreenState())
 //    val state = _state.asStateFlow()
 
 
@@ -33,15 +23,23 @@ class SorterViewModel : ViewModel() {
     private val _showDialog = mutableStateOf(false)
     val showDialog: State<Boolean> = _showDialog
 
-    private var players: MutableList<Player> =
+    private val _progress = mutableStateOf<Float>(0f)
+    val progress: State<Float> = _progress
+
+    var isClickable = true
+
+    var players: MutableList<Player> =
         MasterList.players.sortedByDescending { it.score }.toMutableList()
-    private var allMatches = mutableListOf<Pair<String, String>>()
+    var allMatches = mutableListOf<Pair<String, String>>()
+
     private var index: Int = 0
-    private var roundEmpty = false
-    private var roundCount = 0
+    private var roundMatchSize = 0
+    private var round = 0
     private val rounds = (ln(MasterList.players.size.toDouble()) / ln(2.0)).toInt() + 1
 
+
     init {
+
         generateMatches()
         _currentPair.value = allMatches[index]
 
@@ -49,14 +47,6 @@ class SorterViewModel : ViewModel() {
     }
 
 
-//    private fun runSorter() {
-//
-
-//        viewModelScope.launch(Dispatchers.Main) {
-//            generateMatches()
-//
-//        }
-//    }
 
     private fun generateMatches() {
 
@@ -89,17 +79,21 @@ class SorterViewModel : ViewModel() {
                 break
             }
         }
-        roundCount++
-        if (roundMatches.isEmpty()) {
-            roundEmpty = true
-        }
+        round++
+        roundMatchSize = roundMatches.size
     }
 
     fun updateShowDialog(value: Boolean) {
         _showDialog.value = value
     }
 
+    private fun calculateProgress() {
+        val totalMatches = allMatches.size + roundMatchSize * (rounds - round + 1).toFloat()
+        _progress.value = allMatches.indexOf(currentPair.value).toFloat() / totalMatches
+    }
     fun onSelect(case: Int) {
+
+        calculateProgress()
 
         if (index < allMatches.size - 1) {
             updateRatings(case)
@@ -108,7 +102,9 @@ class SorterViewModel : ViewModel() {
         } else {
             updateRatings(case)
             generateMatches()
-            if (roundEmpty || roundCount == rounds + 1) {
+            if (roundMatchSize == 0 || round == rounds + 1) {  //this ends the sorter
+                isClickable = false
+                _progress.value = 1f
                 _showDialog.value = true
             } else {
                 index++

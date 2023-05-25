@@ -23,7 +23,7 @@ object MasterList {
         Player("HEART", 1500.0),
         Player("IVAN", 1500.0),
         Player("JOHN", 1500.0),
-//        Player("KEVIN", 1500.0),
+        Player("KEVIN", 1500.0),
 //        Player("LEAH", 1500.0),
 //        Player("MARIE", 1500.0),
 //        Player("NATHAN", 1500.0),

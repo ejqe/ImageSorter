@@ -32,21 +32,22 @@ import com.ejqe.imagesorter.data.MasterList
 import com.ejqe.imagesorter.ui.theme.ImageSorterTheme
 
 
-const val TAG = "Testing1"
 
 @Composable
 fun SorterScreen() {
 
 
     val viewModel: SorterViewModel = viewModel()
-    val dummy = MasterList.players
-//    val state = viewModel.state.collectAsState()
-
-//    val playerScoreA = state.value.players.find { it.name == playerNameA }!!.score
-//    val playerScoreB = state.value.players.find { it.name == playerNameB }!!.score
-
     val playerNameA = viewModel.currentPair.value.first
     val playerNameB = viewModel.currentPair.value.second
+
+    val playerScoreA = viewModel.players.find { it.name == playerNameA }!!.score.toInt()
+    val playerScoreB = viewModel.players.find { it.name == playerNameB }!!.score.toInt()
+
+    val matchNo = (viewModel.allMatches.indexOf(viewModel.currentPair.value) + 1).toString()
+
+
+
 
     if (viewModel.showDialog.value){
         PopupDialog()
@@ -60,17 +61,16 @@ fun SorterScreen() {
         verticalArrangement = Arrangement.Center,
     ) {
 
-
-
-
-            Text(text = "Match #1", fontSize = 32.sp)
+            Text(
+                text = "Match #$matchNo",
+                fontSize = 32.sp)
             Spacer(modifier = Modifier.height(60.dp))
 
             LinearProgressIndicator(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth(),
-                progress = 0.8f
+                progress = viewModel.progress.value
             )
 
             Row(
@@ -86,19 +86,19 @@ fun SorterScreen() {
                     modifier = Modifier
                         .weight(1f),
                     text = playerNameA,
-                    textScore = 10.0,
-                    onClick = { viewModel.onSelect(1) }
+                    textScore = playerScoreA,
+                    onClick = { if (viewModel.isClickable) {viewModel.onSelect(1) } }
                 )
                 CardItem(
                     modifier = Modifier
                         .weight(1f),
                     text = playerNameB,
-                    textScore = 10.0,
-                    onClick = { viewModel.onSelect(2) }
+                    textScore = playerScoreB,
+                    onClick = { if (viewModel.isClickable) {viewModel.onSelect(2) } }
                 )
             }
             Button(
-                onClick = { viewModel.onSelect(3) },
+                onClick = { if (viewModel.isClickable) {viewModel.onSelect(3) } },
                 modifier = Modifier
                     .width(120.dp)
                     .padding(8.dp),
@@ -113,7 +113,7 @@ fun SorterScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CardItem(modifier: Modifier, text: String, textScore: Double, onClick: () -> Unit) {
+fun CardItem(modifier: Modifier, text: String, textScore: Int, onClick: () -> Unit) {
     Card(
         modifier = modifier
             .padding(8.dp)
@@ -159,11 +159,11 @@ fun PopupDialog() {
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.updateShowDialog(false) },
+            onDismissRequest = { },
             title = { Text(text = "Sort Finished") },
-            text = { Text(text = "Click to see the results") },
+            text = { Text(text = "Click OK to see the results") },
             confirmButton = {
-                Button(onClick = { viewModel.updateShowDialog(false) }) {
+                Button(onClick = {  }) {
                     Text(text = "OK")
                 }
             }
