@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,11 +15,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,29 +29,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ejqe.imagesorter.R
-import com.ejqe.imagesorter.data.MasterList
 import com.ejqe.imagesorter.ui.theme.ImageSorterTheme
 
 
-
 @Composable
-fun SorterScreen() {
+fun SorterScreen(
+    onDialogClick: () -> Unit,
+    viewModel: SorterViewModel,
+) {
 
+    val state = viewModel.state.collectAsState().value
 
-    val viewModel: SorterViewModel = viewModel()
-    val playerNameA = viewModel.currentPair.value.first
-    val playerNameB = viewModel.currentPair.value.second
+    val playerNameA = state.currentPair.first
+    val playerNameB = state.currentPair.second
 
     val playerScoreA = viewModel.players.find { it.name == playerNameA }!!.score.toInt()
     val playerScoreB = viewModel.players.find { it.name == playerNameB }!!.score.toInt()
 
-    val matchNo = (viewModel.allMatches.indexOf(viewModel.currentPair.value) + 1).toString()
+    val matchNo = (viewModel.allMatches.indexOf(state.currentPair) + 1).toString()
 
 
 
 
-    if (viewModel.showDialog.value){
-        PopupDialog()
+    if (state.showDialog){
+        PopupDialog(onDialogClick = onDialogClick)
     }
 
     Column(
@@ -70,7 +72,7 @@ fun SorterScreen() {
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth(),
-                progress = viewModel.progress.value
+                progress = state.progress
             )
 
             Row(
@@ -117,7 +119,8 @@ fun CardItem(modifier: Modifier, text: String, textScore: Int, onClick: () -> Un
     Card(
         modifier = modifier
             .padding(8.dp)
-            .height(250.dp),
+            .fillMaxWidth()
+            .aspectRatio(0.6f),
         shape = RoundedCornerShape(10),
         onClick = onClick
 
@@ -153,17 +156,18 @@ fun CardItem(modifier: Modifier, text: String, textScore: Int, onClick: () -> Un
 
 @Composable
 
-fun PopupDialog() {
+fun PopupDialog(onDialogClick: () -> Unit) {
     val viewModel: SorterViewModel = viewModel()
-    val showDialog = viewModel.showDialog.value
 
-    if (showDialog) {
+    if (viewModel.state.collectAsState().value.showDialog) {
         AlertDialog(
             onDismissRequest = { },
             title = { Text(text = "Sort Finished") },
             text = { Text(text = "Click OK to see the results") },
             confirmButton = {
-                Button(onClick = {  }) {
+                Button(onClick =  onDialogClick  )
+//                    viewModel.updateShowDialog(false))
+                 {
                     Text(text = "OK")
                 }
             }
@@ -174,6 +178,6 @@ fun PopupDialog() {
 @Composable
 fun SorterScreenPreview() {
     ImageSorterTheme {
-        SorterScreen()
+
     }
 }

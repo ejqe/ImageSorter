@@ -1,8 +1,5 @@
 package com.ejqe.imagesorter.presentation
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.ejqe.imagesorter.data.MasterList
 import com.ejqe.imagesorter.data.Player
@@ -13,18 +10,8 @@ import kotlin.math.pow
 
 class SorterViewModel : ViewModel() {
 
-//    private val _state = MutableStateFlow(SorterScreenState())
-//    val state = _state.asStateFlow()
-
-
-    private val _currentPair: MutableState<Pair<String, String>> = mutableStateOf("" to "")
-    val currentPair: State<Pair<String, String>> = _currentPair
-
-    private val _showDialog = mutableStateOf(false)
-    val showDialog: State<Boolean> = _showDialog
-
-    private val _progress = mutableStateOf<Float>(0f)
-    val progress: State<Float> = _progress
+    private val _state = MutableStateFlow(SorterScreenState())
+    val state = _state.asStateFlow()
 
     var isClickable = true
 
@@ -37,13 +24,9 @@ class SorterViewModel : ViewModel() {
     private var round = 0
     private val rounds = (ln(MasterList.players.size.toDouble()) / ln(2.0)).toInt() + 1
 
-
     init {
-
         generateMatches()
-        _currentPair.value = allMatches[index]
-
-
+        _state.value = _state.value.copy(currentPair = allMatches[index])
     }
 
 
@@ -84,12 +67,26 @@ class SorterViewModel : ViewModel() {
     }
 
     fun updateShowDialog(value: Boolean) {
-        _showDialog.value = value
+        _state.value = _state.value.copy(showDialog = value)
     }
 
     private fun calculateProgress() {
+        val currentMatches = allMatches.indexOf(state.value.currentPair).toFloat()
         val totalMatches = allMatches.size + roundMatchSize * (rounds - round + 1).toFloat()
-        _progress.value = allMatches.indexOf(currentPair.value).toFloat() / totalMatches
+        _state.value = _state.value.copy(progress = currentMatches / totalMatches)
+    }
+
+    private fun calculateRank() {
+        var rank = 1
+        var previousScore = Double.MAX_VALUE
+
+        for( (index, player) in players.withIndex() ) {
+            if (player.score < previousScore) {
+                rank = index +1
+            }
+            player.rank = rank
+            previousScore = player.score
+        }
     }
     fun onSelect(case: Int) {
 
@@ -98,17 +95,18 @@ class SorterViewModel : ViewModel() {
         if (index < allMatches.size - 1) {
             updateRatings(case)
             index++
-            _currentPair.value = allMatches[index]
+            _state.value = _state.value.copy(currentPair = allMatches[index])
         } else {
             updateRatings(case)
             generateMatches()
             if (roundMatchSize == 0 || round == rounds + 1) {  //this ends the sorter
                 isClickable = false
-                _progress.value = 1f
-                _showDialog.value = true
+                _state.value = _state.value.copy(progress = 1f)
+                calculateRank()
+                _state.value = _state.value.copy(showDialog = true)
             } else {
                 index++
-                _currentPair.value = allMatches[index]
+                _state.value = _state.value.copy(currentPair = allMatches[index])
             }
         }
 
@@ -116,7 +114,6 @@ class SorterViewModel : ViewModel() {
 
 
     private fun updateRatings(case: Int) {
-
 
         val (playerNameA, playerNameB) = allMatches[index]
 
@@ -141,7 +138,6 @@ class SorterViewModel : ViewModel() {
         //Update Score in players state
         playerA.score = scoreA
         playerB.score = scoreB
-
 
     }
 
