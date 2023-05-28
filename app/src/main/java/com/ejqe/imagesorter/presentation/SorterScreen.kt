@@ -1,19 +1,20 @@
 package com.ejqe.imagesorter.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -26,14 +27,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +48,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ejqe.imagesorter.R
+import com.ejqe.imagesorter.data.Player
 import com.ejqe.imagesorter.ui.theme.ImageSorterTheme
 
 
@@ -48,179 +56,39 @@ import com.ejqe.imagesorter.ui.theme.ImageSorterTheme
 fun SorterScreen(
     onDialogClick: () -> Unit,
     viewModel: SorterViewModel,
-) {
+
+    ) {
 
     val state = viewModel.state.collectAsState().value
-
-
-    val playerNameA = state.currentPair.first
-    val playerNameB = state.currentPair.second
-
-    val playerScoreA = viewModel.players.find { it.name == playerNameA }!!.score.toInt()
-    val playerScoreB = viewModel.players.find { it.name == playerNameB }!!.score.toInt()
-    val playerImageA = viewModel.players.find { it.name == playerNameA }!!.image
-    val playerImageB = viewModel.players.find { it.name == playerNameB }!!.image
-
-    val matchNo = (viewModel.allMatches.indexOf(state.currentPair) + 1).toString()
-
-
-
 
     if (state.showDialog) {
         PopupDialog(onDialogClick = onDialogClick)
     }
 
 
-    LinearProgressIndicator(
-        modifier = Modifier
-            .padding(24.dp)
-            .fillMaxWidth(),
-        progress = state.progress
-    )
+
     CardPair(
-        imageA = playerImageA,
-        imageB = playerImageB,
-        nameA = playerNameA,
-        nameB = playerNameB,
-        matchNo = matchNo,
-        onClickA = { if (viewModel.isClickable) { viewModel.onSelect(1) } },
-        onClickB = { if (viewModel.isClickable) { viewModel.onSelect(2) } },
-        onClickButton = { if (viewModel.isClickable) { viewModel.onSelect(3) } }
-    )
-
-
-   /* Column(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-
-        Text(
-            text = "Match #$matchNo",
-            fontSize = 32.sp
-        )
-        Spacer(modifier = Modifier.height(60.dp))
-
-        LinearProgressIndicator(
-            modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            progress = state.progress
-        )
-
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-
-        ) {
-
-            CardItem(
-                modifier = Modifier
-                    .weight(1f),
-                image = playerImageA,
-                text = playerNameA,
-                onClick = {
-                    if (viewModel.isClickable) {
-                        viewModel.onSelect(1)
-                    }
-                }
-            )
-            CardItem(
-                modifier = Modifier
-                    .weight(1f),
-                image = playerImageB,
-                text = playerNameB,
-                onClick = {
-                    if (viewModel.isClickable) {
-                        viewModel.onSelect(2)
-                    }
-                }
-            )
-        }
-        Button(
-            onClick = {
-                if (viewModel.isClickable) {
-                    viewModel.onSelect(3)
-                }
-            },
-            modifier = Modifier
-                .width(120.dp)
-                .padding(8.dp),
-        ) {
-
-            Text(text = "Draw")
-        }
-
-    }*/
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CardItem(
-    modifier: Modifier,
-    image: Int,
-    text: String,
-    onClick: () -> Unit
-) {
-
-    val imageHeight = 350
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(imageHeight.dp)
-    ) {
-
-        Card(
-            modifier = modifier
-                .padding(8.dp)
-                .fillMaxWidth()
-                .aspectRatio(0.6f),
-            shape = RoundedCornerShape(10),
-            onClick = onClick
-
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-
-                Text(
-                    text = text,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .align(Alignment.BottomCenter),
-                    textAlign = TextAlign.Center
-                )
-
-
+        playerA = viewModel.players.find { it.name == state.currentPair.first }!!,
+        playerB = viewModel.players.find { it.name == state.currentPair.second }!!,
+        matchNo = (viewModel.allMatches.indexOf(state.currentPair) + 1).toString(),
+        progress = state.progress,
+        onClickA = {
+            if (viewModel.isClickable) {
+                viewModel.onSelect(1)
+            }
+        },
+        onClickB = {
+            if (viewModel.isClickable) {
+                viewModel.onSelect(2)
+            }
+        },
+        onClickButton = {
+            if (viewModel.isClickable) {
+                viewModel.onSelect(3)
             }
         }
-        Image(
-            painter = painterResource(image),
-            contentDescription = "Image",
-            modifier = Modifier
-                .padding(4.dp)
-                .height(imageHeight.dp)
-                .align(Alignment.Center)
-                .scale(getScaleFactor(imageHeight))
-        )
-    }
-}
+    )
 
-fun getScaleFactor(imageHeight: Int): Float {
-    val maxHeight = 500 // Define the maximum height you want to display the image
-    return if (imageHeight > maxHeight) {
-        maxHeight.toFloat() / imageHeight.toFloat()
-    } else {
-        1.0f
-    }
 }
 
 @Composable
@@ -235,7 +103,6 @@ fun PopupDialog(onDialogClick: () -> Unit) {
             text = { Text(text = "Click OK to see the results") },
             confirmButton = {
                 Button(onClick = onDialogClick)
-//                    viewModel.updateShowDialog(false))
                 {
                     Text(text = "OK")
                 }
@@ -245,63 +112,14 @@ fun PopupDialog(onDialogClick: () -> Unit) {
 }
 
 
-@Composable
-fun DummyScreen(
-    imageA: Int = R.drawable.robocosan,
-    imageB: Int = R.drawable.sakura_miko,
-    nameA: String = "Tokino Sora",
-    nameB: String = "AZKi",
-    onClick: () -> Unit = {}
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
 
-        Row(
-//            modifier = Modifier.fillMaxSize()
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-
-        ) {
-            CardConstraint(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp),
-                image = imageA,
-                name = nameA,
-                onClick = onClick
-            )
-            CardConstraint(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp),
-                image = imageB,
-                name = nameB,
-                onClick = onClick
-            )
-
-        }
-        Spacer(modifier = Modifier.height(50.dp))
-
-        Button(
-            onClick = onClick,
-            modifier = Modifier.width(120.dp))
-        {
-            Text(text = "Draw")
-        }
-    }
-
-}
 
 @Composable
 fun CardPair(
-    imageA: Int,
-    imageB: Int,
-    nameA: String,
-    nameB: String,
+    playerA: Player,
+    playerB: Player,
     matchNo: String,
+    progress: Float,
     onClickA: () -> Unit,
     onClickB: () -> Unit,
     onClickButton: () -> Unit
@@ -309,16 +127,21 @@ fun CardPair(
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.SpaceAround
     ) {
 
         Text(
             text = "Match #$matchNo",
             fontSize = 32.sp
         )
-        Spacer(modifier = Modifier.height(60.dp))
 
-        Spacer(modifier = Modifier.height(200.dp))
+        LinearProgressIndicator(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
+            progress = progress
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -328,27 +151,30 @@ fun CardPair(
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 8.dp),
-                image = imageA,
-                name = nameA,
+                image = playerA.image,
+                name = playerA.name,
+                color = playerA.color,
                 onClick = onClickA
             )
             CardConstraint(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 8.dp),
-                image = imageB,
-                name = nameB,
+                image = playerB.image,
+                name = playerB.name,
+                color = playerB.color,
                 onClick = onClickB
             )
 
         }
 
-        Spacer(modifier = Modifier.height(50.dp))
-
         Button(
             onClick = onClickButton,
-            modifier = Modifier.width(120.dp))
-         {
+            modifier = Modifier
+                .width(120.dp)
+                .bounceClick(0.8f, onClickButton)
+        )
+        {
             Text(text = "Draw")
         }
     }
@@ -362,6 +188,7 @@ fun CardConstraint(
     modifier: Modifier,
     image: Int,
     name: String,
+    color: Color,
     onClick: () -> Unit
 
 ) {
@@ -369,8 +196,9 @@ fun CardConstraint(
         modifier = modifier
             .fillMaxWidth()
 
+
     ) {
-        val (imageRef, cardRef) = createRefs()
+        val (imageRef, cardRef, textRef) = createRefs()
 
         Card(
             modifier = Modifier
@@ -381,27 +209,40 @@ fun CardConstraint(
                     bottom.linkTo(parent.bottom)
                     width = Dimension.fillToConstraints
                 }
-                .aspectRatio(0.8f)
+                .aspectRatio(0.7f)
                 .padding(4.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = CardDefaults.cardColors(),
-            onClick = onClick
-        )
-        {
+            shape = RoundedCornerShape(5.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = color
+            ),
+//            onClick = onClick,
 
-            Text(
-                text = name,
+        ){}
+
+
+            Column(
                 modifier = Modifier
-                    .vertical()
-                    .rotate(90f),
-            style = MaterialTheme.typography.titleLarge)
+                    .constrainAs(textRef) {
+                        start.linkTo(cardRef.start)
+                        top.linkTo(cardRef.top)
+                    }
+                    .padding(top = 5.dp)
 
-        }
+            ){
+                name.forEach { char ->
+                Text(
+                    text = char.toString(),
+                    modifier = Modifier
+                        .vertical()
+                        .rotate(90f),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
+                )
 
+                }
+            }
 
-        Image(
-            painter = painterResource(image),
-            contentDescription = "Image",
+        Box(
             modifier = Modifier
                 .constrainAs(imageRef) {
                     start.linkTo(cardRef.start)
@@ -409,16 +250,27 @@ fun CardConstraint(
                     top.linkTo(cardRef.top)
                     bottom.linkTo(cardRef.bottom)
                     height = Dimension.fillToConstraints
+                    width = Dimension.wrapContent
                 }
-                .scale(1.5f)
+//            .background(Color.Blue)
+                .aspectRatio(1f)
+                .scale(2f),
+            contentAlignment = Alignment.Center
+        ) {
 
-        )
 
+            Image(
+                painter = painterResource(image),
+                contentDescription = "Image",
+                modifier = Modifier
+                    .bounceClick(0.8f, onClick)
+
+            )
+        }
 
 
     }
 }
-
 
 
 fun Modifier.vertical() =
@@ -439,4 +291,66 @@ fun SorterScreenPreview() {
         DummyScreen()
 
     }
+}
+@Composable
+fun DummyScreen(
+) {
+    val imageA: Int = R.drawable.houshou_marine
+    val imageB: Int = R.drawable.sakura_miko
+    val nameA = "Hoshimachi Suisei"
+    val nameB = "AZKi"
+    val matchNo = "8"
+    val progress = 0.4f
+    val colorA: Color = Color.Green
+    val colorB: Color = Color.Red
+    val onClick: () -> Unit = {}
+
+
+    CardPair(
+        playerA = Player(nameA, imageA, colorA),
+        playerB = Player(nameB, imageB, colorB),
+        matchNo = matchNo,
+        progress = progress,
+
+        onClickA = onClick,
+        onClickB = onClick,
+        onClickButton = onClick
+    )
+
+
+}
+
+enum class ButtonState { Pressed, Idle }
+fun Modifier.bounceClick(
+    pressScale: Float,
+    onClick: () -> Unit
+) = composed {
+    var buttonState by remember { mutableStateOf(ButtonState.Idle) }
+    val scale by animateFloatAsState(
+        targetValue = if (buttonState == ButtonState.Pressed) pressScale else 1f)
+    val alpha by animateFloatAsState(
+        targetValue = if (buttonState == ButtonState.Pressed) 0.7f else 1f)
+
+    this
+        .graphicsLayer {
+            this.scaleX = scale
+            this.scaleY = scale
+            this.alpha
+        }
+        .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick
+        )
+        .pointerInput(buttonState) {
+            awaitPointerEventScope {
+                buttonState = if (buttonState == ButtonState.Pressed) {
+                    waitForUpOrCancellation()
+                    ButtonState.Idle
+                } else {
+                    awaitFirstDown(false)
+                    ButtonState.Pressed
+                }
+            }
+        }
 }
