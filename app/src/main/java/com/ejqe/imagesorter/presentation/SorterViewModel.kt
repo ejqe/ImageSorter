@@ -5,28 +5,35 @@ import com.ejqe.imagesorter.data.MasterList
 import com.ejqe.imagesorter.data.Player
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.ceil
 import kotlin.math.ln
-import kotlin.math.pow
 
 class SorterViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(SorterScreenState())
     val state = _state.asStateFlow()
 
-    var isClickable = true
+    private val _players = MutableStateFlow(MasterList.players)
+    val players = _players.asStateFlow()
 
-    var players: MutableList<Player> =
-        MasterList.players.sortedByDescending { it.score }.toMutableList()
-    var allMatches = mutableListOf<Pair<String, String>>()
-
+//    private var playerList = players.value.sortedByDescending { it.score }.toMutableList()
+    private var allMatches = mutableListOf<Pair<String, String>>()
     private var index: Int = 0
+
     private var roundMatchSize = 0
     private var round = 0
-    private val rounds = (ln(MasterList.players.size.toDouble()) / ln(2.0)).toInt() + 1
+    private var prevScores = 0.0 to 0.0
+    private val rounds = ceil(ln(MasterList.players.size.toDouble()) / ln(2.0)).toInt()
+
+
+
 
     init {
+
         generateMatches()
-        _state.value = _state.value.copy(currentPair = allMatches[index])
+
+        updateCurPair()
+
     }
 
 
@@ -34,34 +41,37 @@ class SorterViewModel : ViewModel() {
     private fun generateMatches() {
 
         val roundMatches = mutableListOf<Pair<String, String>>()
-        players = players.sortedByDescending { it.score }.toMutableList()
+        val playerList = players.value.sortedByDescending { it.score }.toMutableList()
+
 
         //Selecting Player1
-        for (i in 0 until players.size - 1) {
-            val playerNameA = players[i].name
+        for (i in 0 until playerList.size - 1) {
+            val nameA = playerList[i].name
             //checks if player1 exist in any matches in this round, should only exist once
-            if (roundMatches.any { it.first == playerNameA || it.second == playerNameA }) {
+            if (roundMatches.any { it.first == nameA || it.second == nameA }) {
                 continue // Skip players who already have a match in this round
             }
             //Selecting Player2
-            for (j in i + 1 until players.size) {
-                val playerNameB = players[j].name
+            for (j in i + 1 until playerList.size) {
+                val nameB = playerList[j].name
                 //checks if player2 exist in any matches in this round, should only exist once
-                if (roundMatches.any { it.first == playerNameB || it.second == playerNameB }) {
+                if (roundMatches.any { it.first == nameB || it.second == nameB }) {
                     continue // Skip players who already have a match in this round
                 }
                 //checks if playedMatches contains this single match, if not, then add it to matches
                 //if it exists, continue looping
                 if (allMatches.none { (a, b) ->
-                        (a == playerNameA && b == playerNameB) ||
-                                (a == playerNameB && b == playerNameA)
+                        (a == nameA && b == nameB) ||
+                                (a == nameB && b == nameA)
                     }) {
-                    roundMatches.add(playerNameA to playerNameB)
-                    allMatches.add(playerNameA to playerNameB)
+                    roundMatches.add(nameA to nameB)
+                    allMatches.add(nameA to nameB)
+
                 }
                 break
             }
         }
+
         round++
         roundMatchSize = roundMatches.size
     }
@@ -71,22 +81,34 @@ class SorterViewModel : ViewModel() {
     }
 
     private fun calculateProgress() {
-        val currentMatches = allMatches.indexOf(state.value.currentPair).toFloat()
+        val currentMatches = index + 1f
         val totalMatches = allMatches.size + roundMatchSize * (rounds - round + 1).toFloat()
-        _state.value = _state.value.copy(progress = currentMatches / totalMatches)
+        _state.value = _state.value.copy(
+            progress = currentMatches / totalMatches,
+            matchNo = (currentMatches + 1f).toInt().toString())
     }
 
     private fun calculateRank() {
         var rank = 1
         var previousScore = Double.MAX_VALUE
 
-        for( (index, player) in players.withIndex() ) {
+        for( (index, player) in _players.value.withIndex() ) {
             if (player.score < previousScore) {
                 rank = index +1
             }
             player.rank = rank
             previousScore = player.score
         }
+    }
+
+    private fun updateCurPair() {
+
+        val stringPair = allMatches[index]
+        val playerA = _players.value.find { it.name == stringPair.first }!!
+        val playerB = _players.value.find { it.name == stringPair.second }!!
+
+        _state.value = _state.value.copy(currentPair = playerA to playerB)
+
     }
     fun onSelect(case: Int) {
 
@@ -95,51 +117,64 @@ class SorterViewModel : ViewModel() {
         if (index < allMatches.size - 1) {
             updateRatings(case)
             index++
-            _state.value = _state.value.copy(currentPair = allMatches[index])
+            updateCurPair()
+
         } else {
             updateRatings(case)
             generateMatches()
-            if (roundMatchSize == 0 || round == rounds + 1) {  //this ends the sorter
-                isClickable = false
-                _state.value = _state.value.copy(progress = 1f)
+
+            if (roundMatchSize == 0 || round == rounds + 1) { //this ends the sorter
                 calculateRank()
-                _state.value = _state.value.copy(showDialog = true)
+
+                _state.value = _state.value.copy(isClickable = false, progress = 1f, showDialog = true)
             } else {
-                index++
-                _state.value = _state.value.copy(currentPair = allMatches[index])
+               index++
+               updateCurPair()
             }
         }
-
+        _state.value = _state.value.copy(isUndoClickable = true)
     }
-
 
     private fun updateRatings(case: Int) {
+        prevScores = when (case) {
+            1 -> 1.0 to 0.0
+            2 -> 0.0 to 1.0
+            else -> 0.5 to 0.5 }
+        uploadScore(1)
+    }
 
-        val (playerNameA, playerNameB) = allMatches[index]
+    fun onUndoClick() {
+        index--
+        updateCurPair()
+        _state.value = _state.value.copy(isUndoClickable = false)
+        uploadScore(-1)
+    }
 
-        //Get instance of Player pair
-        val playerA = players.find { it.name == playerNameA }!!
-        val playerB = players.find { it.name == playerNameB }!!
+    private fun uploadScore(plusMinus: Int) {
+        val stringPair = allMatches[index]
+        val playerA = _players.value.find { it.name == stringPair.first }
+        val playerB = _players.value.find { it.name == stringPair.second }
 
-        val expectedScoreA = 1.0 / (1 + 10.0.pow((playerB.score - playerA.score) / 400))
-        val expectedScoreB = 1.0 - expectedScoreA
-        val kFactor = 40 // Adjust this value based on sensitivity
+        playerA?.score = playerA?.score!! + prevScores.first * plusMinus
+        playerB?.score = playerB?.score!! + prevScores.second * plusMinus
 
-        val (scoreA, scoreB) = when (case) {
-            1 -> playerA.score + kFactor * (1 - expectedScoreA) to
-                    playerB.score + kFactor * (0 - expectedScoreB)
 
-            2 -> playerA.score + kFactor * (0 - expectedScoreA) to
-                    playerB.score + kFactor * (1 - expectedScoreB)
 
-            else -> playerA.score + kFactor * (0.5 - expectedScoreA) to
-                    playerB.score - kFactor * (0.5 - expectedScoreA)
-        }
-        //Update Score in players state
-        playerA.score = scoreA
-        playerB.score = scoreB
+
+        //update to playerList
 
     }
 
+    fun tieBreaker() {
+        //summing the conventional score of each defeated opponent
+        //half the conventional score of each drawn opponent
+
+        //used before calculateRank()
+    }
+
+    fun byePlayer() {
+        //select last player that is not on the list, use ascending list and for loop
+        //add 1.0 to the existing score
+    }
 
 }

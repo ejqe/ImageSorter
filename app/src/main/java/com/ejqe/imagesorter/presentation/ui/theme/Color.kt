@@ -1,4 +1,4 @@
-package com.ejqe.imagesorter.ui.theme
+package com.ejqe.imagesorter.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

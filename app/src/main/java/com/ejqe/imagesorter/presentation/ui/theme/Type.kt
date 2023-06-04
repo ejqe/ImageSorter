@@ -1,4 +1,4 @@
-package com.ejqe.imagesorter.ui.theme
+package com.ejqe.imagesorter.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
@@ -27,17 +27,25 @@ val Typography = Typography(
     titleLarge = TextStyle(
         fontFamily = Folty,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
+        fontSize = 36.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp
     ),
-    labelSmall = TextStyle(
+    titleMedium = TextStyle(
+        fontFamily = Folty,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
+    ),
+    titleSmall = TextStyle(
         fontFamily = Folty,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
-    )
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
+    ),
+
 
 )
 

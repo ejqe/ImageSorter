@@ -1,15 +1,14 @@
 package com.ejqe.imagesorter.presentation
 
-import android.app.AlertDialog
-import androidx.compose.runtime.mutableStateOf
-import com.ejqe.imagesorter.data.MasterList
-import com.ejqe.imagesorter.data.MasterList.players
 import com.ejqe.imagesorter.data.Player
 
 data class SorterScreenState(
 
-    val currentPair: Pair<String, String> = ("" to ""),
+    val currentPair: Pair<Player, Player> = Player() to Player(),
     val showDialog: Boolean = false,
-    val progress: Float = 0f
+    val matchNo: String = "1",
+    val progress: Float = 0f,
+    val isClickable: Boolean = true,
+    val isUndoClickable: Boolean = false,
 
-)
+    )

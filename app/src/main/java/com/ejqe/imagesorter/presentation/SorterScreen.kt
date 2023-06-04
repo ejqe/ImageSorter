@@ -1,19 +1,16 @@
 package com.ejqe.imagesorter.presentation
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.updateTransition
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,26 +19,23 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -49,54 +43,84 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ejqe.imagesorter.R
 import com.ejqe.imagesorter.data.Player
-import com.ejqe.imagesorter.ui.theme.ImageSorterTheme
+import com.ejqe.imagesorter.presentation.ui.components.CardOnImage
+import com.ejqe.imagesorter.presentation.ui.components.ImageOnCard
+import com.ejqe.imagesorter.presentation.ui.theme.ImageSorterTheme
 
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SorterScreen(
     onDialogClick: () -> Unit,
     viewModel: SorterViewModel,
-
     ) {
-
     val state = viewModel.state.collectAsState().value
 
-    if (state.showDialog) {
-        PopupDialog(onDialogClick = onDialogClick)
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            Surface(shadowElevation = 3.dp) {
+
+            TopAppBar(
+                title = { Text(text = "Hololive Sorter", style = MaterialTheme.typography.titleLarge) },
+
+            )
+        }}
+    ) {paddingValues ->
+
+        if (state.showDialog) { PopupDialog(onDialogClick = onDialogClick) }
+
+        ScreenContent(
+            modifier = Modifier.padding(paddingValues),
+            playerA = state.currentPair.first,
+            playerB = state.currentPair.second,
+            matchNo = state.matchNo,
+            progress = state.progress,
+            fontSize = MaterialTheme.typography.titleLarge.fontSize,
+            onClickA = {
+                if (state.isClickable) {
+                    viewModel.onSelect(1)
+                }
+            },
+            onClickB = {
+                if (state.isClickable) {
+                    viewModel.onSelect(2)
+                }
+            },
+            onDraw = {
+                if (state.isClickable) {
+                    viewModel.onSelect(3)
+                }
+            },
+            onUndo = {
+                if (state.isUndoClickable) {
+                    viewModel.onUndoClick()
+
+
+
+
+
+
+
+
+
+
+                }
+            }
+
+        )
+
     }
-
-
-
-    CardPair(
-        playerA = viewModel.players.find { it.name == state.currentPair.first }!!,
-        playerB = viewModel.players.find { it.name == state.currentPair.second }!!,
-        matchNo = (viewModel.allMatches.indexOf(state.currentPair) + 1).toString(),
-        progress = state.progress,
-        onClickA = {
-            if (viewModel.isClickable) {
-                viewModel.onSelect(1)
-            }
-        },
-        onClickB = {
-            if (viewModel.isClickable) {
-                viewModel.onSelect(2)
-            }
-        },
-        onClickButton = {
-            if (viewModel.isClickable) {
-                viewModel.onSelect(3)
-            }
-        }
-    )
-
 }
+
 
 @Composable
 
 fun PopupDialog(onDialogClick: () -> Unit) {
     val viewModel: SorterViewModel = viewModel()
 
-    if (viewModel.state.collectAsState().value.showDialog) {
+    if (viewModel.state.value.showDialog) {
         AlertDialog(
             onDismissRequest = { },
             title = { Text(text = "Sort Finished") },
@@ -115,19 +139,22 @@ fun PopupDialog(onDialogClick: () -> Unit) {
 
 
 @Composable
-fun CardPair(
+fun ScreenContent(
+    modifier: Modifier,
     playerA: Player,
     playerB: Player,
     matchNo: String,
     progress: Float,
+    fontSize: TextUnit,
     onClickA: () -> Unit,
     onClickB: () -> Unit,
-    onClickButton: () -> Unit
+    onDraw: () -> Unit,
+    onUndo: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceAround
+        verticalArrangement = Arrangement.Top
     ) {
 
         Text(
@@ -142,44 +169,89 @@ fun CardPair(
             progress = progress
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        ConstraintLayout(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.9f)
         ) {
-            CardConstraint(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp),
-                image = playerA.image,
-                name = playerA.name,
-                color = playerA.color,
-                onClick = onClickA
-            )
-            CardConstraint(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp),
-                image = playerB.image,
-                name = playerB.name,
-                color = playerB.color,
-                onClick = onClickB
-            )
+
+            val mid = createGuidelineFromStart(0.5f)
+            val imBottom = createGuidelineFromBottom(0.1f)
+            val (imageRefA, imageRefB,
+                cardRefA, cardRefB)  = createRefs()
+
+
+            CardOnImage(modifier = Modifier
+                .constrainAs(cardRefA) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                    end.linkTo(mid)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(start = 8.dp, end = 4.dp),
+                player = playerA,
+                onClick = onClickA)
+
+            CardOnImage(modifier = Modifier
+                .constrainAs(cardRefB) {
+                    start.linkTo(mid)
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                }
+                .padding(start = 4.dp, end = 8.dp),
+                player = playerB,
+                onClick = onClickB)
+
+            ImageOnCard(modifier = Modifier
+                .constrainAs(imageRefA) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    bottom.linkTo(imBottom)
+                    end.linkTo(mid)
+                    width = Dimension.fillToConstraints},
+                player = playerA)
+
+            ImageOnCard(modifier = Modifier
+                .constrainAs(imageRefB) {
+                    start.linkTo(mid)
+                    top.linkTo(parent.top)
+                    bottom.linkTo(imBottom)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints},
+                player = playerB)
 
         }
 
-        Button(
-            onClick = onClickButton,
+        FilledTonalButton(
+            onClick = onDraw,
             modifier = Modifier
-                .width(120.dp)
-                .bounceClick(0.8f, onClickButton)
+                .width(150.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(10.dp)
         )
         {
-            Text(text = "Draw")
+            Text(text = "Draw",
+            style = MaterialTheme.typography.titleMedium)
+        }
+
+        OutlinedButton(
+            onClick = onUndo,
+            modifier = Modifier
+                .width(150.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(10.dp)
+        )
+        {
+            Text(text = "Undo",
+                style = MaterialTheme.typography.titleMedium)
         }
     }
 
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,89 +260,79 @@ fun CardConstraint(
     modifier: Modifier,
     image: Int,
     name: String,
+    fontSize: TextUnit,
     color: Color,
     onClick: () -> Unit
 
 ) {
-    ConstraintLayout(
-        modifier = modifier
-            .fillMaxWidth()
+
+    Box(modifier = modifier.fillMaxWidth()) {
 
 
-    ) {
-        val (imageRef, cardRef, textRef) = createRefs()
-
-        Card(
-            modifier = Modifier
-                .constrainAs(cardRef) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    width = Dimension.fillToConstraints
-                }
-                .aspectRatio(0.7f)
-                .padding(4.dp),
-            shape = RoundedCornerShape(5.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = color
-            ),
-//            onClick = onClick,
-
-        ){}
+        ConstraintLayout(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(350.dp)
 
 
-            Column(
+        ) {
+            val (imageRef, cardRef, textRef) = createRefs()
+
+            Card(
                 modifier = Modifier
-                    .constrainAs(textRef) {
-                        start.linkTo(cardRef.start)
-                        top.linkTo(cardRef.top)
+                    .constrainAs(cardRef) {
+                        start.linkTo(imageRef.start)
+                        end.linkTo(imageRef.end)
+                        top.linkTo(imageRef.top)
+                        bottom.linkTo(imageRef.bottom)
+                        width = Dimension.fillToConstraints
                     }
-                    .padding(top = 5.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .offset(y = 20.dp),
+                shape = RoundedCornerShape(5.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = color
+                ),
+                onClick = onClick,
 
-            ){
-                name.forEach { char ->
-                Text(
-                    text = char.toString(),
+                ) {}
+
+
+
+            Box(
+                modifier = Modifier
+                    .constrainAs(imageRef) {
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        top.linkTo(parent.top)
+                        bottom.linkTo(parent.bottom)
+                        height = Dimension.fillToConstraints
+                        width = Dimension.wrapContent
+                    }
+//                    .background(Color.Blue)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+
+
+                Image(
+                    painter = painterResource(image),
+                    contentDescription = "Image",
                     modifier = Modifier
-                        .vertical()
-                        .rotate(90f),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White
-                )
 
-                }
+                )
             }
 
-        Box(
-            modifier = Modifier
-                .constrainAs(imageRef) {
-                    start.linkTo(cardRef.start)
-                    end.linkTo(cardRef.end)
-                    top.linkTo(cardRef.top)
-                    bottom.linkTo(cardRef.bottom)
-                    height = Dimension.fillToConstraints
-                    width = Dimension.wrapContent
+
+                    }
                 }
-//            .background(Color.Blue)
-                .aspectRatio(1f)
-                .scale(2f),
-            contentAlignment = Alignment.Center
-        ) {
 
 
-            Image(
-                painter = painterResource(image),
-                contentDescription = "Image",
-                modifier = Modifier
-                    .bounceClick(0.8f, onClick)
-
-            )
-        }
+            }
 
 
-    }
-}
+
 
 
 fun Modifier.vertical() =
@@ -292,13 +354,14 @@ fun SorterScreenPreview() {
 
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DummyScreen(
 ) {
-    val imageA: Int = R.drawable.houshou_marine
+    val imageA: Int = R.drawable.tsunomaki_watame
     val imageB: Int = R.drawable.sakura_miko
     val nameA = "Hoshimachi Suisei"
-    val nameB = "AZKi"
+    val nameB = "Tsunomaki Watame"
     val matchNo = "8"
     val progress = 0.4f
     val colorA: Color = Color.Green
@@ -306,51 +369,36 @@ fun DummyScreen(
     val onClick: () -> Unit = {}
 
 
-    CardPair(
-        playerA = Player(nameA, imageA, colorA),
-        playerB = Player(nameB, imageB, colorB),
-        matchNo = matchNo,
-        progress = progress,
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            Surface(shadowElevation = 3.dp) {
 
-        onClickA = onClick,
-        onClickB = onClick,
-        onClickButton = onClick
-    )
-
-
-}
-
-enum class ButtonState { Pressed, Idle }
-fun Modifier.bounceClick(
-    pressScale: Float,
-    onClick: () -> Unit
-) = composed {
-    var buttonState by remember { mutableStateOf(ButtonState.Idle) }
-    val scale by animateFloatAsState(
-        targetValue = if (buttonState == ButtonState.Pressed) pressScale else 1f)
-    val alpha by animateFloatAsState(
-        targetValue = if (buttonState == ButtonState.Pressed) 0.7f else 1f)
-
-    this
-        .graphicsLayer {
-            this.scaleX = scale
-            this.scaleY = scale
-            this.alpha
-        }
-        .clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-            onClick = onClick
-        )
-        .pointerInput(buttonState) {
-            awaitPointerEventScope {
-                buttonState = if (buttonState == ButtonState.Pressed) {
-                    waitForUpOrCancellation()
-                    ButtonState.Idle
-                } else {
-                    awaitFirstDown(false)
-                    ButtonState.Pressed
-                }
+                TopAppBar(
+                    title = {
+                        Text(text = "Hololive Sorter",
+                            style = MaterialTheme.typography.titleLarge)
+                    },
+                )
             }
         }
+
+    ) { paddingValues ->
+
+        ScreenContent(
+            modifier = Modifier.padding(paddingValues),
+            playerA = Player(nameA, imageA, colorA),
+            playerB = Player(nameB, imageB, colorB),
+            fontSize = 28.sp,
+            matchNo = matchNo,
+            progress = progress,
+
+            onClickA = onClick,
+            onClickB = onClick,
+            onDraw = onClick,
+            onUndo = onClick,
+        )
+
+
+    }
 }

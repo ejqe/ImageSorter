@@ -1,4 +1,4 @@
-package com.ejqe.imagesorter.ui.theme
+package com.ejqe.imagesorter.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build

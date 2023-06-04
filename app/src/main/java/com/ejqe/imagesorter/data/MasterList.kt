@@ -1,14 +1,16 @@
 package com.ejqe.imagesorter.data
 
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import com.ejqe.imagesorter.R
 
 
 data class Player(
-    val name: String,
-    val image: Int,
-    val color: Color,
-    var score: Double = 1500.0,
+    val name: String = "",
+    val image: Int = R.drawable.usada_pekora,
+    val color: Color = Color.Unspecified,
+    var score: Double = 0.0,
     var rank: Int = 0
 )
 object MasterList {
@@ -42,7 +44,9 @@ object MasterList {
     )
 
 
-
+val colors = mutableListOf(
+    Color(0xFF245eff), Color(0xffa36694), Color(0xffffdd17), Color(0xffff1c9a), Color(0xfffc123f), Color(0xff76dfff), Color(0xffffa227), Color(0xffffa6ea), Color(0xffad6ce0), Color(0xffed3a4f), Color(0xffff6e9b), Color(0xffe0ff2c), Color(0xfff4348b), Color(0xffff314a), Color(0xffff9cb4), Color(0xffe27dfd), Color(0xffffcc29), Color(0xff50e5f9), Color(0xff88d2ff), Color(0xffff5028), Color(0xffacabb2), Color(0xffca3c28), Color(0xff99d8ff), Color(0xfffef29e), Color(0xffcabaff), Color(0xfffe84c2), Color(0xff6bcdf8), Color(0xffffb65d), Color(0xffa3e5cf), Color(0xffcf2830), Color(0xff936cc6), Color(0xff831550), Color(0xffffacd3), Color(0xffcf4c4a), Color(0xff93dcd8), Color(0xfff6bbbb), Color(0xffb19ddc), Color(0xffb3ee55), Color(0xffd60e54), Color(0xfff2c95c), Color(0xff0f52ba), Color(0xffbab9c3), Color(0xffff3d3d), Color(0xff393464), Color(0xffc90d40), Color(0xffff511c), Color(0xff62567e), Color(0xff5d81c7), Color(0xfff8db92), Color(0xffe10e5b), Color(0xff32c965), Color(0xff1c1797), Color(0xffc29371), Color(0xfffe3a2d), Color(0xfffe8b04), Color(0xffd583ab), Color(0xff2b2b6e), Color(0xffe3f1cd)
+)
 
 }
 
