@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.ceil
 import kotlin.math.ln
+import kotlin.math.pow
 
 class SorterViewModel : ViewModel() {
 
@@ -25,10 +26,6 @@ class SorterViewModel : ViewModel() {
     private var roundMatchSize = 0
     private var round = 0
     private var backup = Backup()
-    private var backupP = Player() to Player()
-    private var backupO = PlayerOp() to PlayerOp()
-
-    private var byeList = mutableListOf<String>()
     private var playersOp = _players.value.map { PlayerOp(name = it.name) }.toMutableList()
 
 
@@ -36,11 +33,44 @@ class SorterViewModel : ViewModel() {
         _players.value.shuffle()
         generateMatches()
         updateCurPair("init")
+
+    }
+
+    fun onSelect(case: String) {
+
+        backupPlayer()
+        if (index == allMatches.size - 1) {//last item reached
+            generateMatches()
+            updateRatings(case)
+
+            if (roundMatchSize == 0 || round > rounds) { //this ends the sorter
+                calculateRank()
+                _state.value = _state.value.copy(
+                    isClickable = false, showDialog = true,
+                    progress = 1f, matchNo = index + 2)
+            } else { //2
+                updateCurPair("next")
+            }
+
+        } else { //1
+            updateRatings(case)
+            updateCurPair("next")
+
+
+        }
+        _state.value = _state.value.copy(isUndoClickable = true)
+    }
+
+    fun onUndoClick() {
+        _state.value = _state.value.copy(isUndoClickable = false)
+        restorePlayer()
+        updateCurPair("prev")
+
     }
 
 
     private fun generateMatches() {
-
+        round++
         val roundMatches = mutableListOf<Pair<String, String>>()
         val playerList = players.value.sortedByDescending { it.score }.toMutableList()
 
@@ -72,39 +102,19 @@ class SorterViewModel : ViewModel() {
         }
 
         allMatches += roundMatches
-        promoteBye(playerList)
 
-        round++
         roundMatchSize = roundMatches.size
-    }
 
-    private fun promoteBye(playerList: MutableList<Player>) {
-        if (playerList.size % 2 == 1) {
-            for (i in playerList.size - 1 downTo 0) {
-                val name = playerList[0].name
-                if (!byeList.contains(name)) {
-                    byeList.add(name)
-                    val promoted = _players.value.find { it.name == name }!!
-                    promoted.score = promoted.score + 1.0
-
-                    break
-                }
-            }
-        }
+        println("Generated Matches: ${roundMatches.size}")
+        roundMatches.forEach { println(it) }
+        println("-------------------------")
     }
 
     fun updateShowDialog(value: Boolean) {
         _state.value = _state.value.copy(showDialog = value)
     }
 
-    private fun calculateProgress() {
-        //estimate total matches
-        val totalMatches = allMatches.size + roundMatchSize * (rounds - round + 1).toFloat()
-        _state.value = _state.value.copy(
-            progress = (index + 1) / totalMatches,
-            matchNo = index + 2
-        )
-    }
+
 
     private fun calculateRank() {
         var rank = 1
@@ -120,36 +130,6 @@ class SorterViewModel : ViewModel() {
     }
 
 
-    fun onSelect(case: String) {
-        calculateProgress()
-        backupPlayer()
-        if (index != allMatches.size - 1) {
-
-            updateRatings(case)
-            updateCurPair("next")
-
-        } else { //next round
-
-            updateRatings(case)
-            generateMatches()
-
-            if (roundMatchSize == 0 || round > rounds) { //this ends the sorter
-                calculateRank()
-                _state.value = _state.value.copy(
-                    isClickable = false, progress = 1f, showDialog = true
-                )
-            }
-            updateCurPair("next")
-
-        }
-        _state.value = _state.value.copy(isUndoClickable = true)
-    }
-
-    fun onUndoClick() {
-        _state.value = _state.value.copy(isUndoClickable = false, matchNo = index)
-        restorePlayer()
-        updateCurPair("prev")
-    }
 
     private fun updateCurPair(case: String) {
         when (case) {
@@ -162,46 +142,70 @@ class SorterViewModel : ViewModel() {
         val playerB = players.value.first { it.name == pair.second }
 
         _state.value = _state.value.copy(currentPair = playerA to playerB)
+
+        val totalMatches = allMatches.size + roundMatchSize * (rounds - round + 1).toFloat()
+        _state.value = _state.value.copy(
+            progress = index / totalMatches,
+            matchNo = index + 1)
+
     }
 
     private fun updateRatings(case: String) {
-        val (a, b) = findIndex(state.value.currentPair)
+//        val (a, b) = findIndex(state.value.currentPair)
+        val (playerA, playerB) = _state.value.currentPair
+
+        val expectedScoreA = 1.0 / (1 + 10.0.pow((playerB.score - playerA.score) / 400))
+        val expectedScoreB = 1.0 - expectedScoreA
+
+        val kFactor = 40 // Adjust this value based on sensitivity
+
+
+
 
         when (case) {
             "Left" -> {
-                _players.value[a].score += 1.0
-                _players.value[b].score += 0.0
-                _players.value[a].wins += 1
+                playerA.score = playerA.score + kFactor * (1 - expectedScoreA)
+                playerB.score = playerB.score + kFactor * (0 - expectedScoreB)
+                playerA.wins += 1
                 addOpData(
-                    name = players.value[a].name,
-                    defeated = players.value[b].name,
-                    draw = ""
+                    name = playerA.name,
+                    defeated = playerB.name
                 )
             }
 
             "Right" -> {
-                _players.value[a].score += 0.0
-                _players.value[b].score += 1.0
-                _players.value[b].wins += 1
+                playerA.score = playerA.score + kFactor * (0 - expectedScoreA)
+                playerB.score = playerB.score + kFactor * (1 - expectedScoreB)
+                playerB.wins += 1
                 addOpData(
-                    name = players.value[b].name,
-                    defeated = players.value[a].name
+                    name = playerB.name,
+                    defeated = playerA.name
                 )
             }
 
             else -> {
-                _players.value[a].score += 0.5
-                _players.value[b].score += 0.5
+                playerA.score = playerA.score + kFactor * (0.5 - expectedScoreA)
+                playerB.score = playerB.score + kFactor * (0.5 - expectedScoreB)
                 addOpData(
-                    name = players.value[a].name,
-                    draw = players.value[b].name
+                    name = playerA.name,
+                    draw = playerB.name
                 )
                 addOpData(
-                    name = players.value[b].name,
-                    draw = players.value[a].name
+                    name = playerB.name,
+                    draw = playerA.name
                 )
             }
         }
+
+        val p1 = state.value.currentPair.first
+        val p2 = state.value.currentPair.second
+        println("Name: ${p1.name}, Score: ${p1.score}, Wins: ${p1.wins}")
+        println("Name: ${p2.name}, Score: ${p2.score}, Wins: ${p1.wins}")
+        println("--------------------------------------")
+
+
+
+
     }
 
 
@@ -213,6 +217,8 @@ class SorterViewModel : ViewModel() {
         backup.playerOp = playersOp[a] to playersOp[b]
 
 
+        println("BACKUP-A: ${backup.player.first.name} - ${backup.player.first.score}")
+        println("BACKUP-B: ${backup.player.second.name} - ${backup.player.second.score}")
     }
 
     private fun restorePlayer() {
@@ -221,7 +227,8 @@ class SorterViewModel : ViewModel() {
         _players.value[indexB] = backup.player.second
 
         val pair = backup.playerOp
-        val (a, b) = findIndexOp(pair)
+        val a = playersOp.indexOfFirst { it.name == pair.first.name }
+        val b = playersOp.indexOfFirst { it.name == pair.second.name }
         playersOp[a] = backup.playerOp.first
         playersOp[b] = backup.playerOp.second
 
@@ -235,13 +242,6 @@ class SorterViewModel : ViewModel() {
         val indexB = players.value.indexOfFirst { it.name == pair.second.name }
         return indexA to indexB
     }
-
-    private fun findIndexOp(pair: Pair<PlayerOp, PlayerOp>): Pair<Int, Int> {
-        val indexA = playersOp.indexOfFirst { it.name == pair.first.name }
-        val indexB = playersOp.indexOfFirst { it.name == pair.second.name }
-        return indexA to indexB
-    }
-
 
     private fun addOpData(name: String, defeated: String = "", draw: String = "") {
         val idx = playersOp.indexOfFirst { it.name == name }

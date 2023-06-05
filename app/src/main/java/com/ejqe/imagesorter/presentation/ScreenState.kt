@@ -6,11 +6,11 @@ data class ScreenState(
 
     val currentPair: Pair<Player, Player> = Player() to Player(), //
     val showDialog: Boolean = false,
-    val matchNo: Int = 1, //
-    val progress: Float = 0f, //
+    val matchNo: Int = 0,
+    val progress: Float = 0f,
     val isClickable: Boolean = true,
     val isUndoClickable: Boolean = false,
-    val index: Int = 0,
+
     )
 
 
