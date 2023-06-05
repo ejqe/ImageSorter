@@ -61,10 +61,8 @@ fun SorterScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             Surface(shadowElevation = 3.dp) {
-
             TopAppBar(
                 title = { Text(text = "Hololive Sorter", style = MaterialTheme.typography.titleLarge) },
-
             )
         }}
     ) {paddingValues ->
@@ -75,22 +73,22 @@ fun SorterScreen(
             modifier = Modifier.padding(paddingValues),
             playerA = state.currentPair.first,
             playerB = state.currentPair.second,
-            matchNo = state.matchNo,
+            matchNo = state.matchNo.toString(),
             progress = state.progress,
             fontSize = MaterialTheme.typography.titleLarge.fontSize,
             onClickA = {
                 if (state.isClickable) {
-                    viewModel.onSelect(1)
+                    viewModel.onSelect("Left")
                 }
             },
             onClickB = {
                 if (state.isClickable) {
-                    viewModel.onSelect(2)
+                    viewModel.onSelect("Right")
                 }
             },
             onDraw = {
                 if (state.isClickable) {
-                    viewModel.onSelect(3)
+                    viewModel.onSelect("Draw")
                 }
             },
             onUndo = {
@@ -98,19 +96,9 @@ fun SorterScreen(
                     viewModel.onUndoClick()
 
 
-
-
-
-
-
-
-
-
                 }
             }
-
         )
-
     }
 }
 
@@ -120,7 +108,7 @@ fun SorterScreen(
 fun PopupDialog(onDialogClick: () -> Unit) {
     val viewModel: SorterViewModel = viewModel()
 
-    if (viewModel.state.value.showDialog) {
+    if (viewModel.state.collectAsState().value.showDialog) {
         AlertDialog(
             onDismissRequest = { },
             title = { Text(text = "Sort Finished") },
@@ -358,7 +346,7 @@ fun SorterScreenPreview() {
 @Composable
 fun DummyScreen(
 ) {
-    val imageA: Int = R.drawable.tsunomaki_watame
+    val imageA: Int = R.drawable.error
     val imageB: Int = R.drawable.sakura_miko
     val nameA = "Hoshimachi Suisei"
     val nameB = "Tsunomaki Watame"

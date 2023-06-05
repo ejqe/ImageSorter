@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -18,13 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.ejqe.imagesorter.R
+import coil.compose.AsyncImage
 import com.ejqe.imagesorter.data.Player
 
 @Composable
@@ -65,23 +63,19 @@ fun CardOnImage(modifier: Modifier, player: Player, onClick: () -> Unit) {
                     .fillMaxWidth()
                     .padding(8.dp)
                     .align(Alignment.BottomCenter),
-//                elevation = CardDefaults.cardElevation(2.dp),
+
                 colors = CardDefaults.cardColors(Color(0x7F000000))
             ) {
-                
-                Image(
-                    modifier = Modifier.padding(8.dp),
-                    painter = painterResource(id = R.drawable.name_suisei),
-                    contentDescription = "Name")
 
-//                Text(
-//                    modifier = Modifier
-//                        .padding(4.dp)
-//                        .align(Alignment.CenterHorizontally),
-//                    text = player.name,
-//                    textAlign = TextAlign.Center,
-//                    style = MaterialTheme.typography.titleSmall
-//                )
+                Text(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .align(Alignment.CenterHorizontally),
+                    text = player.name,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White
+                )
             }
 
         }

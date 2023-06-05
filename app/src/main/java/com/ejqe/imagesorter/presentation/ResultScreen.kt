@@ -1,14 +1,19 @@
 package com.ejqe.imagesorter.presentation
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,6 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ejqe.imagesorter.R
@@ -31,7 +39,7 @@ fun ResultScreen(viewModel: SorterViewModel) {
     ) {
         val players = viewModel.players.value.toList().sortedBy { it.rank }
         items(players) { player ->
-/*            Card(
+            Card(
                 modifier = Modifier
                     .padding(8.dp)
                     .height(250.dp)
@@ -47,8 +55,9 @@ fun ResultScreen(viewModel: SorterViewModel) {
                         modifier = Modifier
                             .padding(4.dp)
                             .clip(shape = RoundedCornerShape(10)),
-                        painter = painterResource(R.drawable.image),
-                        contentDescription = "Image"
+                        painter = painterResource(player.image),
+                        contentDescription = "Image",
+                        contentScale = ContentScale.FillHeight
                     )
 
                     Text(
@@ -65,9 +74,9 @@ fun ResultScreen(viewModel: SorterViewModel) {
                         )
                     )
                 }
-            }*/
+            }
 
-            Box(
+  /*          Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.6f)
@@ -98,13 +107,13 @@ fun ResultScreen(viewModel: SorterViewModel) {
                         text = "#${player.rank}",
                         style = MaterialTheme.typography.titleMedium
                     )
-                }
+                }*/
 
 
             }
         }
     }
-}
+
 
 
 @Preview(showBackground = true)

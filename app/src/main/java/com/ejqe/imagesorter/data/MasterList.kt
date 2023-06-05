@@ -1,18 +1,30 @@
 package com.ejqe.imagesorter.data
 
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import com.ejqe.imagesorter.R
 
 
 data class Player(
     val name: String = "",
-    val image: Int = R.drawable.usada_pekora,
+    val image: Int = R.drawable.error,
     val color: Color = Color.Unspecified,
     var score: Double = 0.0,
-    var rank: Int = 0
+    var rank: Int = 0,
+    var tieBreak: Double = 0.0,
+    var wins: Int = 0
 )
+
+data class PlayerOp(
+    val name: String = "",
+    val defeated: MutableList<String> = mutableListOf(),
+    val draw: MutableList<String> = mutableListOf(),
+)
+
+data class Backup(
+    var player: Pair<Player,Player> = Player() to Player(),
+    var playerOp: Pair<PlayerOp, PlayerOp> = PlayerOp() to PlayerOp()
+)
+
 object MasterList {
     val players = mutableListOf(
         Player("Tokino Sora", R.drawable.tokino_sora, Color(0xFF245efe)),

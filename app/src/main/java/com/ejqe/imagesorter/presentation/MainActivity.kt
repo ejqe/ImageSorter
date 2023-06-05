@@ -7,9 +7,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.ejqe.imagesorter.presentation.ResultScreen
-import com.ejqe.imagesorter.presentation.SorterScreen
-import com.ejqe.imagesorter.presentation.SorterViewModel
 import com.ejqe.imagesorter.presentation.ui.theme.ImageSorterTheme
 
 class MainActivity : ComponentActivity() {
