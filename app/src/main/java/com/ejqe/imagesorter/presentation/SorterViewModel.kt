@@ -176,7 +176,6 @@ class SorterViewModel : ViewModel() {
 
     private fun updateRatings(case: String) {
         val (a, b) = findIndex(state.value.currentPair)
-        val (playerA, playerB) = _players.value
 
         val expectedScoreA = 1.0 / (1 + 10.0.pow((players.value[a].score - players.value[b].score) / 400))
         val expectedScoreB = 1.0 - expectedScoreA
@@ -184,30 +183,30 @@ class SorterViewModel : ViewModel() {
 
         when (case) {
             "Left" -> {
-                playerA.score = playerA.score + kFactor * (1 - expectedScoreA)
-                playerB.score = playerB.score + kFactor * (0 - expectedScoreB)
-                playerA.wins += 1
+                _players.value[a].score += kFactor * (1 - expectedScoreA)
+                _players.value[b].score += kFactor * (0 - expectedScoreB)
+                _players.value[a].wins += 1
                 addOpData(
-                    name = playerA.name,
-                    defeated = playerB.name
+                    name = players.value[a].name,
+                    defeated = players.value[b].name
                 )
             }
 
             "Right" -> {
-                playerA.score = playerA.score + kFactor * (0 - expectedScoreA)
-                playerB.score = playerB.score + kFactor * (1 - expectedScoreB)
-                playerB.wins += 1
+                _players.value[a].score += kFactor * (0 - expectedScoreA)
+                _players.value[b].score += kFactor * (1 - expectedScoreB)
+                _players.value[b].wins += 1
                 addOpData(
-                    name = playerB.name,
-                    defeated = playerA.name
+                    name = players.value[b].name,
+                    defeated = players.value[a].name
                 )
             }
 
             else -> {
-                playerA.score = playerA.score + kFactor * (0.5 - expectedScoreA)
-                playerB.score = playerB.score + kFactor * (0.5 - expectedScoreB)
-                addOpData(name = playerA.name, draw = playerB.name)
-                addOpData(name = playerB.name, draw = playerA.name)
+                _players.value[a].score += kFactor * (0.5 - expectedScoreA)
+                _players.value[b].score += kFactor * (0.5 - expectedScoreB)
+                addOpData(name = players.value[a].name, draw = players.value[b].name)
+                addOpData(name = players.value[b].name, draw =players.value[a].name)
             }
         }
     }
