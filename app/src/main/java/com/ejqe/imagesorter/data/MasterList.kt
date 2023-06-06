@@ -10,8 +10,14 @@ data class Player(
     val color: Color = Color.Unspecified,
     var score: Double = 1000.0,
     var rank: Int = 0,
-    var tieBreak: Double = 0.0,
+    var tbScore: Double = 0.0,
     var wins: Int = 0
+)
+
+data class PlayerUI(
+    val name: String = "",
+    val image: Int = R.drawable.error,
+    val color: Color = Color.Unspecified,
 )
 
 data class PlayerOp(
