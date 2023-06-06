@@ -57,7 +57,7 @@ object MasterList {
         Player("Amane Kanata", R.drawable.amane_kanata, Color(0xFF99d9ff)),
         Player("Tsunomaki Watame", R.drawable.tsunomaki_watame, Color(0xFFfef29e)),
         Player("Tokoyami Towa", R.drawable.tokoyami_towa, Color(0xFFcabbff)),
-        Player("Himemori Luna", R.drawable.himemori_luna, Color(0xFFff85c2))
+//        Player("Himemori Luna", R.drawable.himemori_luna, Color(0xFFff85c2))
     )
 
 

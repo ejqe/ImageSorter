@@ -8,9 +8,11 @@ import com.ejqe.imagesorter.data.Player
 import com.ejqe.imagesorter.data.PlayerUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Random
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.pow
+
 
 class SorterViewModel : ViewModel() {
 
@@ -31,7 +33,7 @@ class SorterViewModel : ViewModel() {
 
 
     init {
-        _players.value.sortByDescending { it.name }
+        _players.value.shuffle()
         generateMatches()
         updateCurPair("init")
         println("INIT")
@@ -53,7 +55,7 @@ class SorterViewModel : ViewModel() {
                     isClickable = false, showDialog = true,
                     progress = 1f, matchNo = index + 2)
 
-                sonnebornBerger()
+                buchholz()
                 _players.value.sortWith(
                     compareByDescending<Player> { it.score }.thenByDescending { it.tbScore })
                 calculateRank()
@@ -96,12 +98,12 @@ class SorterViewModel : ViewModel() {
         round++
         val roundMatches = mutableListOf<Pair<String, String>>()
         val playerList = players.value.sortedWith(
-            compareByDescending<Player> { it.name }.thenBy { it.score }).toMutableList()
+            compareByDescending<Player> { it.score }.thenBy { Math.random()}).toMutableList()
 
         //Selecting Player1
         for (i in 0 until playerList.size - 1) {
             val nameA = playerList[i].name
-            println("A - $nameA")
+
 
             //checks if player1 exist in any matches in this round, should only exist once
             if (roundMatches.any { it.first == nameA || it.second == nameA }) {
@@ -111,7 +113,7 @@ class SorterViewModel : ViewModel() {
             for (j in i + 1 until playerList.size) {
                 val nameB = playerList[j].name
 
-                println("B - $nameB")
+
                 //checks if player2 exist in any matches in this round, should only exist once
                 if (roundMatches.any { it.first == nameB || it.second == nameB }) {
                     continue // Skip players who already have a match in this round
@@ -120,16 +122,16 @@ class SorterViewModel : ViewModel() {
                 //if it exists, continue looping
                 if (allMatches.none { (a, b) ->
                         (a == nameA && b == nameB) || (a == nameB && b == nameA) }) {
-
                     allMatches.add(nameA to nameB)
                     roundMatches.add(nameA to nameB)
-                    println("STORED - ($nameA, $nameB)")
 
-
+                } else {
+                    continue
                 }
-
                 break
+
             }
+
         }
 
 
@@ -287,16 +289,14 @@ class SorterViewModel : ViewModel() {
     }
 
 
-    private fun sonnebornBerger() {
+    private fun buchholz() {
 
         for (player in playersOp) {
 
             val p = players.value.first { it.name == player.name }
             val defeatList = player.defeated.map { p.score }
-            val drawList = player.draw.map { p.score }
 
-            _players.value.first { it.name == player.name }
-                .tbScore = defeatList.sum() + 0.5 * drawList.sum()
+            _players.value.first { it.name == player.name }.tbScore = defeatList.sum()
         }
 
     }
