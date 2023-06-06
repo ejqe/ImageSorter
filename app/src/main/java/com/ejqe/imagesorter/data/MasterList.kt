@@ -11,7 +11,6 @@ data class Player(
     var score: Double = 1000.0,
     var rank: Int = 0,
     var tbScore: Double = 0.0,
-    var wins: Int = 0
 )
 
 data class PlayerUI(

@@ -31,7 +31,7 @@ class SorterViewModel : ViewModel() {
 
 
     init {
-        _players.value.shuffle()
+        _players.value.sortByDescending { it.name }
         generateMatches()
         updateCurPair("init")
         println("INIT")
@@ -48,17 +48,24 @@ class SorterViewModel : ViewModel() {
             updateRatings(case)
 
             if (roundMatchSize == 0 || round > rounds) { //sorter end here (3)
-//                sonnebornBerger()
-                _players.value.sortWith(
-                    compareByDescending<Player> { it.score }.thenBy { it.wins }.thenBy { it.tbScore })
-                calculateRank()
-
-                players.value.forEach { println(it) }
-
 
                 _state.value = _state.value.copy(
                     isClickable = false, showDialog = true,
                     progress = 1f, matchNo = index + 2)
+
+                sonnebornBerger()
+                _players.value.sortWith(
+                    compareByDescending<Player> { it.score }.thenByDescending { it.tbScore })
+                calculateRank()
+
+                players.value.forEach { println(
+                    "Rank: ${it.rank}, Score: ${it.score}, tbScore:${it.tbScore}, Name: ${it.name}") }
+                println("----------------------------------------------")
+
+                playersOp.forEach { println("Name: ${it.name}, \nDefeated: ${it.defeated}, \nDraw: ${it.draw}\n\n") }
+
+
+
 
             } else { //(2)
                 updateCurPair("next")
@@ -72,12 +79,6 @@ class SorterViewModel : ViewModel() {
         }
         _state.value = _state.value.copy(isUndoClickable = true)
 
-//        val (a, b) = findIndex(state.value.currentPair)
-//        val p1 = players.value[a]
-//        val p2 = players.value[b]
-//        println("Name: ${p1.name}, Score: ${p1.score}, Wins: ${p1.wins}")
-//        println("Name: ${p2.name}, Score: ${p2.score}, Wins: ${p2.wins}")
-//        println("--------------------------------------")
 
 
 
@@ -94,11 +95,14 @@ class SorterViewModel : ViewModel() {
     private fun generateMatches() {
         round++
         val roundMatches = mutableListOf<Pair<String, String>>()
-        val playerList = players.value.sortedByDescending { it.score }.toMutableList()
+        val playerList = players.value.sortedWith(
+            compareByDescending<Player> { it.name }.thenBy { it.score }).toMutableList()
 
         //Selecting Player1
         for (i in 0 until playerList.size - 1) {
             val nameA = playerList[i].name
+            println("A - $nameA")
+
             //checks if player1 exist in any matches in this round, should only exist once
             if (roundMatches.any { it.first == nameA || it.second == nameA }) {
                 continue // Skip players who already have a match in this round
@@ -106,6 +110,8 @@ class SorterViewModel : ViewModel() {
             //Selecting Player2
             for (j in i + 1 until playerList.size) {
                 val nameB = playerList[j].name
+
+                println("B - $nameB")
                 //checks if player2 exist in any matches in this round, should only exist once
                 if (roundMatches.any { it.first == nameB || it.second == nameB }) {
                     continue // Skip players who already have a match in this round
@@ -113,23 +119,28 @@ class SorterViewModel : ViewModel() {
                 //checks if playedMatches contains this single match, if not, then add it to matches
                 //if it exists, continue looping
                 if (allMatches.none { (a, b) ->
-                        (a == nameA && b == nameB) || (a == nameB && b == nameA)
-                    })
+                        (a == nameA && b == nameB) || (a == nameB && b == nameA) }) {
 
+                    allMatches.add(nameA to nameB)
                     roundMatches.add(nameA to nameB)
-//                allMatches.add(nameA to nameB)
+                    println("STORED - ($nameA, $nameB)")
+
+
+                }
 
                 break
             }
         }
 
-        allMatches += roundMatches
 
         roundMatchSize = roundMatches.size
 
+        println("-------------------------")
         println("Generated Matches: ${roundMatches.size}")
         roundMatches.forEach { println(it) }
         println("-------------------------")
+
+        roundMatches.clear()
     }
 
     fun updateShowDialog(value: Boolean) {
@@ -140,14 +151,22 @@ class SorterViewModel : ViewModel() {
 
     private fun calculateRank() {
         var rank = 1
-        var previousScore = Double.MAX_VALUE
+        var prevScore = Double.MAX_VALUE
+        var prevTbScore = Double.MAX_VALUE
 
         for ((index, player) in _players.value.withIndex()) {
-            if (player.score < previousScore) {
-                rank = index + 1
+            if (player.score < prevScore) {
+                    rank = index + 1
+            } else if (player.score == prevScore) {
+                if (player.tbScore < prevTbScore) {
+                    rank = index + 1
+                }
             }
+
+
             player.rank = rank
-            previousScore = player.score
+            prevScore = player.score
+            prevTbScore = player.tbScore
         }
     }
 
@@ -185,7 +204,7 @@ class SorterViewModel : ViewModel() {
             "Left" -> {
                 _players.value[a].score += kFactor * (1 - expectedScoreA)
                 _players.value[b].score += kFactor * (0 - expectedScoreB)
-                _players.value[a].wins += 1
+
                 addOpData(
                     name = players.value[a].name,
                     defeated = players.value[b].name
@@ -195,7 +214,7 @@ class SorterViewModel : ViewModel() {
             "Right" -> {
                 _players.value[a].score += kFactor * (0 - expectedScoreA)
                 _players.value[b].score += kFactor * (1 - expectedScoreB)
-                _players.value[b].wins += 1
+
                 addOpData(
                     name = players.value[b].name,
                     defeated = players.value[a].name
@@ -209,6 +228,21 @@ class SorterViewModel : ViewModel() {
                 addOpData(name = players.value[b].name, draw =players.value[a].name)
             }
         }
+
+
+//        val (a, b) = findIndex(state.value.currentPair)
+//        val p1 = players.value[a]
+//        val p2 = players.value[b]
+//        println("Name: ${p1.name}, Score: ${p1.score}")
+//        println("Name: ${p2.name}, Score: ${p2.score}")
+//        println("--------------------------------------")
+
+
+
+
+
+
+
     }
 
 
@@ -246,30 +280,25 @@ class SorterViewModel : ViewModel() {
         return indexA to indexB
     }
 
-    private fun addOpData(name: String, defeated: String = "", draw: String = "") {
+    private fun addOpData(name: String, defeated: String? = null, draw: String? = null) {
         val idx = playersOp.indexOfFirst { it.name == name }
-        playersOp[idx].defeated.add(defeated)
-        playersOp[idx].draw.add(draw)
+        if (defeated != null) playersOp[idx].defeated.add(defeated)
+        if (draw != null) playersOp[idx].draw.add(draw)
     }
 
 
     private fun sonnebornBerger() {
-        for (i in 0 until playersOp.size) {
 
-            val defeatList = playersOp[i].defeated.map { name ->
-                val p = players.value.first { it.name == name }
-                p.score
-            }
-            val drawList = playersOp[i].draw.map { name ->
-                val p = players.value.first { it.name == name }
-                p.score
-            }
+        for (player in playersOp) {
 
-            val idx = playersOp.indexOfFirst { it.name == playersOp[i].name }
-            _players.value[idx].score = defeatList.sum() + 0.5 * drawList.sum()
+            val p = players.value.first { it.name == player.name }
+            val defeatList = player.defeated.map { p.score }
+            val drawList = player.draw.map { p.score }
 
-            println("${players.value[i]} defeats $defeatList")
+            _players.value.first { it.name == player.name }
+                .tbScore = defeatList.sum() + 0.5 * drawList.sum()
         }
+
     }
 }
 
