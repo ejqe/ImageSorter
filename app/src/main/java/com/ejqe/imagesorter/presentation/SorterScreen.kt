@@ -43,7 +43,7 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ejqe.imagesorter.R
 import com.ejqe.imagesorter.data.Player
-import com.ejqe.imagesorter.data.PlayerUI
+
 import com.ejqe.imagesorter.presentation.ui.components.CardOnImage
 import com.ejqe.imagesorter.presentation.ui.components.ImageOnCard
 import com.ejqe.imagesorter.presentation.ui.theme.ImageSorterTheme
@@ -130,8 +130,8 @@ fun PopupDialog(onDialogClick: () -> Unit) {
 @Composable
 fun ScreenContent(
     modifier: Modifier,
-    playerA: PlayerUI,
-    playerB: PlayerUI,
+    playerA: Player,
+    playerB: Player,
     matchNo: String,
     progress: Float,
     fontSize: TextUnit,
@@ -376,8 +376,8 @@ fun DummyScreen(
 
         ScreenContent(
             modifier = Modifier.padding(paddingValues),
-            playerA = PlayerUI(nameA, imageA, colorA),
-            playerB = PlayerUI(nameB, imageB, colorB),
+            playerA = Player(nameA, imageA, colorA),
+            playerB = Player(nameB, imageB, colorB),
             fontSize = 28.sp,
             matchNo = matchNo,
             progress = progress,

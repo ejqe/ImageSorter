@@ -22,12 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.ejqe.imagesorter.data.Player
-import com.ejqe.imagesorter.data.PlayerUI
+
 
 @Composable
-fun ImageOnCard(modifier: Modifier, player: PlayerUI) {
+fun ImageOnCard(modifier: Modifier, player: Player) {
     Box(modifier = modifier
         .fillMaxWidth()
         .aspectRatio(1f)
@@ -46,7 +45,7 @@ fun ImageOnCard(modifier: Modifier, player: PlayerUI) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CardOnImage(modifier: Modifier, player: PlayerUI, onClick: () -> Unit) {
+fun CardOnImage(modifier: Modifier, player: Player, onClick: () -> Unit) {
     Card(modifier = modifier
         .fillMaxWidth()
         .fillMaxHeight()

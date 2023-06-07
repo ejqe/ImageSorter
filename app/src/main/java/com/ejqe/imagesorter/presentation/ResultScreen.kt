@@ -37,7 +37,7 @@ fun ResultScreen(viewModel: SorterViewModel) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3)
     ) {
-        val players = viewModel.players.value.toList().sortedBy { it.rank }
+        val players = viewModel.players.toList().sortedBy { it.rank }
         items(players) { player ->
             Card(
                 modifier = Modifier
